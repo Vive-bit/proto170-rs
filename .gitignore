@@ -1,0 +1,7 @@
+.venv/
+# Rust build artifacts
+/target
+**/*.rs.bk
+/.idea/PyWeb.iml
+/.idea/vcs.xml
+/.idea/workspace.xml
