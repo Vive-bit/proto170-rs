@@ -1,16 +1,12 @@
-name: Build and Release Python Wheel
+name: Build and Release Python Wheel (cibuildwheel)
 
 on:
   push:
     tags:
-      - "v*.*.*"  # z. B. v0.1.0 oder v1.2.3
-
-env:
-  CARGO_TERM_COLOR: always
+      - "v*.*.*"
 
 jobs:
   build:
-    name: Build wheel with maturin
     runs-on: ubuntu-latest
 
     steps:
@@ -22,17 +18,18 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Build wheel with maturin (manylinux)
+      - name: Install dependencies
         run: |
-          docker run --rm \
-            -v "$PWD":/io \
-            ghcr.io/pyo3/maturin \
-            build --release --manylinux 2014 \
-            -o /io/target/wheels
+          python -m pip install --upgrade pip
+          pip install cibuildwheel
 
-      - name: Upload .whl to GitHub Release
+      - name: Build wheel (cibuildwheel)
+        run: |
+          cibuildwheel --output-dir dist
+
+      - name: Upload wheel to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/wheels/*.whl
+          files: dist/*.whl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
