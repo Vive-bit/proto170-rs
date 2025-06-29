@@ -4,6 +4,7 @@ mod crc;
 
 use pyo3::prelude::*;
 use protocol::*;
+use crate::crc::crc16;
 
 #[pymodule]
 fn proto170(_py: Python, m: &PyModule) -> PyResult<()> {
