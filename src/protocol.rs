@@ -2,7 +2,24 @@ use pyo3::prelude::*;
 use crate::crc::crc16;
 use crate::util::{pack, unpack};
 
+pub const START_BYTE_MASTER: u8 = 0xAA;
+pub const START_BYTE_SLAVE: u8 = 0xBB;
 pub const PACKET_LENGTH: usize = 10;
+
+
+#[pyclass]
+pub struct PacketConstants;
+
+#[pymethods]
+impl PacketConstants {
+    #[classattr]
+    pub const START_BYTE_MASTER: u8 = START_BYTE_MASTER;
+    #[classattr]
+    pub const START_BYTE_SLAVE: u8 = START_BYTE_SLAVE;
+    #[classattr]
+    pub const PACKET_LENGTH: usize = PACKET_LENGTH;
+}
+
 
 #[pyfunction]
 pub fn build_request(
@@ -13,7 +30,7 @@ pub fn build_request(
     qty: u16,
 ) -> Vec<u8> {
     let mut packet = Vec::with_capacity(PACKET_LENGTH);
-    packet.push(0xAA);
+    packet.push(START_BYTE_MASTER);
     packet.push(slave_id);
     packet.push(uid);
     packet.push(cmd);
@@ -68,4 +85,22 @@ pub fn build_set_request(
     let reg = pack(0, internal_id);
     let qty = pack(0, state); // state in low byte
     build_request(slave_id, uid, 0x03, reg, qty)
+}
+
+#[pyfunction]
+pub fn check_crc(response: Vec<u8>) -> bool {
+    if response.len() < 2 {
+        return false;
+    }
+
+    let payload = &response[..response.len() - 2];
+    let crc_calc = crc16(payload);
+
+    let crc_lo = response[response.len() - 2];
+    let crc_hi = response[response.len() - 1];
+
+    let calc_lo = (crc_calc & 0xFF) as u8;
+    let calc_hi = (crc_calc >> 8) as u8;
+
+    crc_lo == calc_lo && crc_hi == calc_hi
 }
