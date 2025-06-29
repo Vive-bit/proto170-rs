@@ -57,3 +57,15 @@ pub fn build_read_request(
     let reg = pack(0, internal_id); // or pack(internal_id, 0)
     build_request(slave_id, uid, 0x02, reg, 0)
 }
+
+#[pyfunction]
+pub fn build_set_request(
+    slave_id: u8,
+    uid: u8,
+    internal_id: u8,
+    state: u8,
+) -> Vec<u8> {
+    let reg = pack(0, internal_id);
+    let qty = pack(0, state); // state in low byte
+    build_request(slave_id, uid, 0x03, reg, qty)
+}
