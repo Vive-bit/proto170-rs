@@ -1,0 +1,38 @@
+name: Build and Release Python Wheel
+
+on:
+  push:
+    tags:
+      - "v*.*.*"  # z. B. v0.1.0 oder v1.2.3
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build wheel with maturin
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build wheel with maturin (manylinux)
+        run: |
+          docker run --rm \
+            -v "$PWD":/io \
+            ghcr.io/pyo3/maturin \
+            build --release --manylinux 2014 \
+            -o /io/target/wheels
+
+      - name: Upload .whl to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/wheels/*.whl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
