@@ -1,0 +1,6 @@
+[build-system]
+requires = ["maturin>=1.0", "cibuildwheel"]
+build-backend = "maturin"
+
+[tool.cibuildwheel]
+build = "cp312-*"
