@@ -5,7 +5,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  linux-build:
+    name: Build manylinux wheel (Python 3.12)
     runs-on: ubuntu-latest
 
     steps:
@@ -30,4 +31,31 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: proto170-py312-wheel
+          path: target/wheels/*.whl
+  windows-build:
+    name: Build Windows wheel (Python 3.12)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install maturin
+        run: |
+          python -m pip install --upgrade pip
+          pip install maturin
+
+      - name: Build wheel
+        run: |
+          maturin build --release --interpreter python
+
+      - name: Upload Windows wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: proto170-windows-py312
           path: target/wheels/*.whl
