@@ -1,5 +1,6 @@
-# PyWeb Protocol 170 – Rust Package Build
+# Protocol 170 – Rust Package Build
 
+Dieses Protokoll wird von meinen internen Projekten für die serielle Schnittstelle verwendet.
 Dieses Repository enthält native Python-Erweiterungen in Rust, verpackt via [maturin](https://github.com/PyO3/maturin).  
 Dieser Guide zeigt, wie man unter **Windows mit WSL (Ubuntu)** ein **Linux-kompatibles `.whl`** erstellst.
 
