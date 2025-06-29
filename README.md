@@ -26,32 +26,44 @@ sudo apt update
 sudo apt install -y curl build-essential python3.12-venv git
 
 ## 2. Rust installieren
+```
 curl https://sh.rustup.rs -sSf | sh
 source $HOME/.cargo/env
 cargo --version  # check
+```
 
 ## 3. Reboot ist nicht zwingend nötig, wenn source gemacht
 ### sudo reboot
 
 ## 4. Projekt klonen
+```
 git clone https://<GHP-TOKEN>@github.com/Vive-bit/PyWeb.git
-cd PyWeb
-git switch packages/rs/proto170
+cd proto170-rs
+git switch main
+```
 
 ## 5. Virtuelle Umgebung vorbereiten
+```
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install maturin
+```
 
 ## 6. Paket bauen
-maturin build --release --manylinux 2014
+```
+maturin build --release
+```
 
 ## 7. Datei ins dist-Verzeichnis
-# mkdir -p dist
+```
+mkdir -p dist
 cp target/wheels/*.whl dist/
+```
 
 ## 9. Commit für das Wheel
+```
 git add dist/*.whl .gitignore
 git commit -m "release: linux wheel build"
-git push origin packages/rs/proto170
+git push origin main
+```
