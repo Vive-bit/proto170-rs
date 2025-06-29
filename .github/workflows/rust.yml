@@ -10,29 +10,29 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  build-wheel:
+    name: Build Linux wheel via maturin (manylinux)
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      - name: Build wheel in manylinux container
+        run: |
+          docker run --rm \
+            -v "$PWD":/io \
+            ghcr.io/pyo3/maturin \
+            build --release --manylinux 2014 \
+            -o /io/target/wheels
 
-    - name: Install maturin
-      run: pip install maturin
-
-    - name: Build wheel
-      run: maturin build --release --manylinux 2014
-
-    - name: Upload wheel as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-wheel
-        path: target/wheels/*.whl
+      - name: Upload built wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-wheel
+          path: target/wheels/*.whl
