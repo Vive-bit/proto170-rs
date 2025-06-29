@@ -17,13 +17,17 @@ Dieser Guide zeigt, wie man unter **Windows mit WSL (Ubuntu)** ein **Linux-kompa
 
 ## 🧱 Setup-Schritte (einmalig)
 
-# Installatiomn
+# Installation
 ## 1. WSL Setup (nur einmal nötig)
+```
 wsl --install Ubuntu
+```
 
 ## === Im Ubuntu-Terminal ===
+```
 sudo apt update
 sudo apt install -y curl build-essential python3.12-venv git
+```
 
 ## 2. Rust installieren
 ```
@@ -33,7 +37,9 @@ cargo --version  # check
 ```
 
 ## 3. Reboot ist nicht zwingend nötig, wenn source gemacht
-### sudo reboot
+```
+sudo reboot
+```
 
 ## 4. Projekt klonen
 ```
