@@ -44,19 +44,19 @@ jobs:
             -w /io \
             quay.io/pypa/manylinux2014_aarch64:latest \
             bash -lc "
-              # 1) System-Tools
-              yum install -y git python3-devel && \
+              # 1) System-Tools + Curl für rustup
+              yum install -y git python3-devel curl && \
 
-              # 2) Python-Bins ins PATH
+              # 2) Rustup (installiert rustc + cargo)
+              curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+              export PATH=\$HOME/.cargo/bin:\$PATH && \
+
+              # 3) Python-Tools
               export PATH=/opt/python/cp312-cp312/bin:\$PATH && \
-
-              # 3) maturin installieren
               python3.12 -m pip install --upgrade pip maturin && \
 
-              # 4) Wheel bauen via python -m maturin
-              python3.12 -m maturin build \
-                --release \
-                --interpreter python3.12
+              # 4) Build
+              python3.12 -m maturin build --release --interpreter python3.12
             "
 
       - name: Upload aarch64-Wheel
