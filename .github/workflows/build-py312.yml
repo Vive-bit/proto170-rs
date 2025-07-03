@@ -23,7 +23,6 @@ jobs:
           name: proto170-py312-wheel-x86_64
           path: target/wheels/*.whl
 
-  jobs:
   linux-aarch64:
     name: Build manylinux (aarch64)
     runs-on: ubuntu-latest
