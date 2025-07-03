@@ -36,19 +36,26 @@ jobs:
         with:
           platforms: linux/arm64
 
-      - name: Pull manylinux-Container
-        run: docker pull quay.io/pypa/manylinux2014_aarch64:latest
-
-      - name: Build wheel in manylinux2014_aarch64
+      - name: Pull and build in manylinux2014_aarch64
         run: |
+          docker pull quay.io/pypa/manylinux2014_aarch64:latest
           docker run --rm \
-            -v ${{ github.workspace }}:/io \
+            -v "${{ github.workspace }}":/io \
             -w /io \
             quay.io/pypa/manylinux2014_aarch64:latest \
             bash -lc "
-              yum install -y git python3-devel       && \
+              # 1) System-Tools
+              yum install -y git python3-devel && \
+
+              # 2) Python-Bins ins PATH
+              export PATH=/opt/python/cp312-cp312/bin:\$PATH && \
+
+              # 3) maturin installieren
               python3.12 -m pip install --upgrade pip maturin && \
-              maturin build --release \
+
+              # 4) Wheel bauen via python -m maturin
+              python3.12 -m maturin build \
+                --release \
                 --manylinux aarch64 \
                 --interpreter python3.12
             "
