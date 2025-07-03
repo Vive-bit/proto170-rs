@@ -23,6 +23,30 @@ jobs:
           name: proto170-py312-wheel-x86_64
           path: target/wheels/*.whl
 
+  linux-armv7l:
+    name: Build manylinux (armv7l)
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_armv7l:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Abhängigkeiten
+        run: |
+          yum install -y git python3-devel curl && \
+          curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+          export PATH=$HOME/.cargo/bin:/opt/python/cp312-cp312/bin:$PATH && \
+          python3.12 -m pip install --upgrade pip maturin && \
+          python3.12 -m maturin build --release --interpreter python3.12
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: proto170-py312-wheel-armv7l
+          path: target/wheels/*.whl
+
   linux-aarch64:
     name: Build manylinux (aarch64)
     runs-on: ubuntu-latest
