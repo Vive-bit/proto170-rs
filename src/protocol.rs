@@ -2,9 +2,11 @@ use pyo3::prelude::*;
 use crate::crc::crc16;
 use crate::util::{pack, unpack};
 
-pub const START_BYTE_MASTER: u8 = 0xAA;
-pub const START_BYTE_SLAVE: u8 = 0xBB;
-pub const PACKET_LENGTH: usize = 10;
+pub const START_BYTE: u8 = 0x7E;
+pub const REQUEST_FRAME_TYPE: u8 = 0x10;
+pub const RESPONSE_FRAME_TYPE: u8 = 0x20;
+pub const REQUEST_FRAME_LENGTH: usize = 13;
+pub const RESPONSE_FRAME_LENGTH: usize = 10;
 
 
 #[pyclass]
@@ -13,94 +15,91 @@ pub struct PacketConstants;
 #[pymethods]
 impl PacketConstants {
     #[classattr]
-    pub const START_BYTE_MASTER: u8 = START_BYTE_MASTER;
+    pub const START_BYTE: u8 = START_BYTE;
     #[classattr]
-    pub const START_BYTE_SLAVE: u8 = START_BYTE_SLAVE;
+    pub const REQUEST_FRAME_TYPE: u8 = REQUEST_FRAME_TYPE;
     #[classattr]
-    pub const PACKET_LENGTH: usize = PACKET_LENGTH;
+    pub const RESPONSE_FRAME_TYPE: u8 = RESPONSE_FRAME_TYPE;
+    #[classattr]
+    pub const REQUEST_FRAME_LENGTH: usize = REQUEST_FRAME_LENGTH;
+    #[classattr]
+    pub const RESPONSE_FRAME_LENGTH: usize = RESPONSE_FRAME_LENGTH;
 }
 
-
 #[pyfunction]
-pub fn build_request(
+pub fn build_request_frame(
+    request_id: u16,
     slave_id: u8,
-    uid: u8,
-    cmd: u8,
-    reg: u16,
-    qty: u16,
+    request_type: u8,  // 0x01 = GET
+    operation: u8,     // 0x00 = READ, 0x01 = WRITE
+    mode: u8,          // 0x00 = DIGITAL, 0x01 = ANALOG
+    new_state: u16,    // nur bei WRITE relevant
+    gpio_id: u8,
 ) -> Vec<u8> {
-    let mut packet = Vec::with_capacity(PACKET_LENGTH);
-    packet.push(START_BYTE_MASTER);
-    packet.push(slave_id);
-    packet.push(uid);
-    packet.push(cmd);
-    packet.push((reg >> 8) as u8);
-    packet.push((reg & 0xFF) as u8);
-    packet.push((qty >> 8) as u8);
-    packet.push((qty & 0xFF) as u8);
+    let mut frame = Vec::with_capacity(REQUEST_FRAME_LENGTH);
+    frame.push(START_BYTE);
+    frame.push(REQUEST_FRAME_TYPE);
 
-    let crc = crc16(&packet);
-    packet.push((crc & 0xFF) as u8);
-    packet.push((crc >> 8) as u8);
+    frame.push((request_id >> 8) as u8);
+    frame.push((request_id & 0xFF) as u8);
 
-    packet
+    frame.push(slave_id);
+    frame.push(request_type);
+    frame.push(operation);
+    frame.push(mode);
+
+    frame.push((new_state >> 8) as u8);
+    frame.push((new_state & 0xFF) as u8);
+
+    frame.push(gpio_id);
+
+    let crc = crc16(&frame);
+    frame.push((crc & 0xFF) as u8);
+    frame.push((crc >> 8) as u8);
+
+    frame
 }
 
 #[pyfunction]
-pub fn build_ping_request(slave_id: u8, uid: u8) -> Vec<u8> {
-    build_request(slave_id, uid, 0x00, 0, 0)
-}
-
-#[pyfunction]
-pub fn build_register_request(
+pub fn build_response_frame(
+    request_id: u16,
     slave_id: u8,
-    uid: u8,
-    internal_id: u8,
-    pin: u8,
-    type_code: u8,
-    mode_code: u8,
+    data_value: u16,
 ) -> Vec<u8> {
-    let reg = pack(internal_id, pin);
-    let qty = pack(type_code, mode_code);
-    build_request(slave_id, uid, 0x01, reg, qty)
+    let mut frame = Vec::with_capacity(RESPONSE_FRAME_LENGTH);
+    frame.push(START_BYTE);
+    frame.push(RESPONSE_FRAME_TYPE);
+
+    frame.push((request_id >> 8) as u8);
+    frame.push((request_id & 0xFF) as u8);
+
+    frame.push(slave_id);
+    frame.push(0x02);
+
+    frame.push((data_value >> 8) as u8);
+    frame.push((data_value & 0xFF) as u8);
+
+    let crc = crc16(&frame);
+    frame.push((crc & 0xFF) as u8);
+    frame.push((crc >> 8) as u8);
+
+    frame
 }
 
 #[pyfunction]
-pub fn build_read_request(
-    slave_id: u8,
-    uid: u8,
-    internal_id: u8,
-) -> Vec<u8> {
-    let reg = pack(0, internal_id); // or pack(internal_id, 0)
-    build_request(slave_id, uid, 0x02, reg, 0)
-}
-
-#[pyfunction]
-pub fn build_set_request(
-    slave_id: u8,
-    uid: u8,
-    internal_id: u8,
-    state: u8,
-) -> Vec<u8> {
-    let reg = pack(0, internal_id);
-    let qty = pack(0, state); // state in low byte
-    build_request(slave_id, uid, 0x03, reg, qty)
-}
-
-#[pyfunction]
-pub fn check_crc(response: Vec<u8>) -> bool {
-    if response.len() < 2 {
+pub fn check_crc(data: Vec<u8>) -> bool {
+    if data.len() < 3 {
         return false;
     }
 
-    let payload = &response[..response.len() - 2];
+    let payload = &data[..data.len() - 2];
     let crc_calc = crc16(payload);
 
-    let crc_lo = response[response.len() - 2];
-    let crc_hi = response[response.len() - 1];
+    let crc_lsb = data[data.len() - 2];
+    let crc_msb = data[data.len() - 1];
 
-    let calc_lo = (crc_calc & 0xFF) as u8;
-    let calc_hi = (crc_calc >> 8) as u8;
+    let calc_lsb = (crc_calc & 0xFF) as u8;
+    let calc_msb = (crc_calc >> 8) as u8;
 
-    crc_lo == calc_lo && crc_hi == calc_hi
+    crc_lsb == calc_lsb && crc_msb == calc_msb
 }
