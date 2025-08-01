@@ -20,7 +20,7 @@ impl PacketConstants {
 }
 
 #[pyfunction]
-fn build_frame(frame_type: u8, payload: Vec<u8>) -> Vec<u8> {
+pub fn build_frame(frame_type: u8, payload: Vec<u8>) -> Vec<u8> {
     let length = (payload.len() + 2) as u8;
 
     let mut frame = Vec::with_capacity(3 + payload.len() + 2);
