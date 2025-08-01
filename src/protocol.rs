@@ -1,6 +1,5 @@
 use pyo3::prelude::*;
 use crate::crc::crc16;
-use crate::util::{pack, unpack};
 
 pub const START_BYTE: u8 = 0x7E;
 pub const REQUEST_FRAME_TYPE: u8 = 0x10;
