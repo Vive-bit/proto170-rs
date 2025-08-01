@@ -1,3 +1,6 @@
+use pyo3::prelude::*;
+use pyo3::pyfunction;
+
 #[pyfunction]
 pub fn pack(a: u8, b: u8) -> u16 {
     ((a as u16) << 8) | b as u16
