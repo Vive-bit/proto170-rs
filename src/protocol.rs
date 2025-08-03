@@ -1,7 +1,8 @@
 use pyo3::prelude::*;
 use crate::crc::crc16;
 
-pub const START_BYTE: u8 = 0x7E;
+pub const START_BYTE: u8 = 0xAA;
+pub const START_BYTE_MASTER: u8 = 0x7E;
 pub const REQUEST_FRAME_TYPE: u8 = 0x10;
 pub const RESPONSE_FRAME_TYPE: u8 = 0x20;
 
@@ -13,6 +14,8 @@ pub struct PacketConstants;
 impl PacketConstants {
     #[classattr]
     pub const START_BYTE: u8 = START_BYTE;
+    #[classattr]
+    pub const START_BYTE_MASTER: u8 = START_BYTE_MASTER;
     #[classattr]
     pub const REQUEST_FRAME_TYPE: u8 = REQUEST_FRAME_TYPE;
     #[classattr]
